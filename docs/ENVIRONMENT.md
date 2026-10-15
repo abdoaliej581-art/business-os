@@ -9,11 +9,11 @@ Create a local `.env.local` file (never commit it) with only the values you actu
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-AI_PROVIDER_API_KEY=
+OPENAI_API_KEY=
 ```
 
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`: public project URL and anon/publishable key for a dedicated Supabase project. These do not replace authentication or RLS.
-- `AI_PROVIDER_API_KEY`: private server-only key for the selected AI provider. Never prefix it with `NEXT_PUBLIC_`.
+- `OPENAI_API_KEY`: private server-only key for the selected AI provider. Never prefix it with `NEXT_PUBLIC_`.
 - `SUPABASE_SERVICE_ROLE_KEY`: not required by the current application. If a future server-only administrative workflow truly needs it, store it only in the deployment secret manager and never expose it to the browser.
 
 ## Vercel
