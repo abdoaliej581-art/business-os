@@ -7,7 +7,7 @@ export function GET() {
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
-  const aiConfigured = Boolean(process.env.AI_PROVIDER_API_KEY);
+  const aiConfigured = Boolean(process.env.OPENAI_API_KEY);
 
   return NextResponse.json({
     status: "ok",
