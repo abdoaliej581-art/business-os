@@ -36,9 +36,8 @@ export default function LoginPage() {
           options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
         });
         if (error) throw error;
-        setMessage(data.session
-          ? "تم إنشاء الحساب. جاري فتح مساحة العمل."
-          : "تم إرسال رسالة تأكيد إذا كان البريد صالحًا. أكّد البريد ثم سجّل الدخول.");
+        if (data.session) { window.location.assign("/"); return; }
+        setMessage("تم إرسال رسالة تأكيد إذا كان البريد صالحًا. أكّد البريد ثم سجّل الدخول.");
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر إتمام العملية. حاول مرة أخرى.");
