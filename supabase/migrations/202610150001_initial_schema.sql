@@ -62,6 +62,7 @@ create table public.content_drafts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+create unique index content_drafts_id_workspace_unique on public.content_drafts(id, workspace_id);
 create index content_drafts_workspace_updated_idx on public.content_drafts(workspace_id, updated_at desc);
 
 create table public.leads (
@@ -85,6 +86,7 @@ create table public.leads (
 );
 create index leads_workspace_stage_idx on public.leads(workspace_id, stage);
 create index leads_workspace_followup_idx on public.leads(workspace_id, next_follow_up_at);
+create unique index leads_id_workspace_unique on public.leads(id, workspace_id);
 
 create table public.lead_activities (
   id uuid primary key default gen_random_uuid(),
@@ -97,6 +99,8 @@ create table public.lead_activities (
   created_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now()
 );
+alter table public.lead_activities add constraint lead_activities_lead_workspace_fk
+  foreign key (lead_id, workspace_id) references public.leads(id, workspace_id) on delete cascade;
 create index lead_activities_lead_idx on public.lead_activities(lead_id, created_at desc);
 
 create table public.campaigns (
@@ -133,6 +137,8 @@ create table public.calendar_entries (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table public.calendar_entries add constraint calendar_draft_workspace_fk
+  foreign key (draft_id, workspace_id) references public.content_drafts(id, workspace_id) on delete set null (draft_id);
 create index calendar_workspace_schedule_idx on public.calendar_entries(workspace_id, scheduled_at);
 
 create table public.audit_events (
@@ -218,7 +224,8 @@ create policy "profiles_update_self" on public.profiles for update to authentica
 create policy "workspaces_read_member" on public.workspaces for select to authenticated using (public.is_workspace_member(id));
 create policy "workspaces_update_admin" on public.workspaces for update to authenticated using (public.has_workspace_role(id, array['owner','admin']::public.workspace_role[])) with check (public.has_workspace_role(id, array['owner','admin']::public.workspace_role[]));
 create policy "members_read_workspace" on public.workspace_members for select to authenticated using (public.is_workspace_member(workspace_id));
-create policy "members_manage_admin" on public.workspace_members for all to authenticated using (public.has_workspace_role(workspace_id, array['owner','admin']::public.workspace_role[])) with check (public.has_workspace_role(workspace_id, array['owner','admin']::public.workspace_role[]));
+-- Only owners can manage memberships. Letting admins edit memberships could allow self-promotion.
+create policy "members_manage_owner" on public.workspace_members for all to authenticated using (public.has_workspace_role(workspace_id, array['owner']::public.workspace_role[])) with check (public.has_workspace_role(workspace_id, array['owner']::public.workspace_role[]));
 
 create policy "brand_member_read" on public.brand_profiles for select to authenticated using (public.is_workspace_member(workspace_id));
 create policy "brand_editor_write" on public.brand_profiles for all to authenticated using (public.has_workspace_role(workspace_id, array['owner','admin','marketer']::public.workspace_role[])) with check (public.has_workspace_role(workspace_id, array['owner','admin','marketer']::public.workspace_role[]));
@@ -243,6 +250,9 @@ create policy "audit_admin_insert" on public.audit_events for insert to authenti
   public.is_workspace_member(workspace_id) and actor_id = (select auth.uid())
 );
 
+revoke all on function public.create_workspace(text, text) from public, anon;
+revoke all on function public.is_workspace_member(uuid) from public, anon;
+revoke all on function public.has_workspace_role(uuid, public.workspace_role[]) from public, anon;
 grant execute on function public.create_workspace(text, text) to authenticated;
 grant execute on function public.is_workspace_member(uuid) to authenticated;
 grant execute on function public.has_workspace_role(uuid, public.workspace_role[]) to authenticated;
